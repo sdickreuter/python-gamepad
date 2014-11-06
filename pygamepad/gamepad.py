@@ -14,7 +14,8 @@ USB_PRODUCT = 0xc21d
 
 class Gamepad(object):
 
-    def __init__(self):
+    def __init__(self, callback = None):
+        self.callback = callback
         busses = usb.busses()
         for bus in busses:
             devs = bus.devices
@@ -56,6 +57,8 @@ class Gamepad(object):
                     self._state[i] = data[i]
                 #print(self._state)
                 self.changed.value = 1
+                if self.callback is not None:
+                    self.callback()
             except usb.core.USBError:
                 data = None
             #connection.send(data)
