@@ -55,7 +55,7 @@ class Gamepad(object):
                 data = struct.unpack('<'+'B'*20, data)
                 for i in range(20):
                     self._state[i] = data[i]
-                #print(self._state)
+                print(self._state[:])
                 self.changed.value = 1
                 if self.callback is not None:
                     self.callback()
@@ -95,6 +95,18 @@ class Gamepad(object):
     def get_analogR_y(self):
         return self._state[8]
 
+    def get_dir_up(self):
+        return self._state[2] in (1,5,9)
+
+    def get_dir_down(self):
+        return self._state[2] in (2,6,10)
+
+    def get_dir_left(self):
+        return self._state[2] in (4,5,6)
+
+    def get_dir_up(self):
+        return self._state[2] in (8,9,10)
+
     def __del__(self):
         self._worker.join(0.2)
         self._dev.releaseInterface()
@@ -106,4 +118,5 @@ if __name__ == '__main__':
    while True:
       if pad.changed.value == 1:
         #print(pad._state[:])
-        print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
+        #print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
+        pass
