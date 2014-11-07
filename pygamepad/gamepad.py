@@ -65,6 +65,9 @@ class Gamepad(object):
             #running = connection.recv()
         return True
 
+    def get_state(self):
+        return self._state[:]
+
     def get_LB(self):
         return self._state[3] == 1
 
