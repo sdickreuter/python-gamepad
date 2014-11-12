@@ -14,7 +14,13 @@ USB_PRODUCT = 0xc21d
 
 class Gamepad(object):
 
-    def __init__(self):
+    def __init__(self, use_connection = False):
+        self.use_connection = use_connection
+        if use_connection:
+            self.receiver, self._sender = multiprocessing.Pipe()
+        else:
+            self._sender = None
+            self.receiver = None
         self.callback = None
         self.args = None
         busses = usb.busses()
@@ -38,11 +44,12 @@ class Gamepad(object):
         # getting other gamepads to work might be a simple as changing this
         self._dev.interruptWrite(0x02,struct.pack('<BBB', 0x01,0x03,0x04))
 
+        #initialize _state with correct values
         self._state = multiprocessing.Array('i', [0, 20, 0, 0, 0, 0, 128, 0, 128, 0, 128, 0, 128, 0, 0, 0, 0, 0, 0, 0] )
+        self._old_state = multiprocessing.Array('i', [0, 20, 0, 0, 0, 0, 128, 0, 128, 0, 128, 0, 128, 0, 0, 0, 0, 0, 0, 0] )
         self.changed = multiprocessing.Value('i', 0)
 
-        self.master_conn, self.slave_conn = multiprocessing.Pipe()
-        self._worker = multiprocessing.Process(target=self._read_gamepad, args=(self.slave_conn,))
+        self._worker = multiprocessing.Process(target=self._read_gamepad)
         self._worker.daemon = True
         self._worker.start()
 
@@ -50,25 +57,46 @@ class Gamepad(object):
         self.callback = callback
         self.args = args
 
-    def _read_gamepad(self, connection):
+    def _read_gamepad(self):
         running = True
-        data = None
         while running:
             self.changed.value = 0
             try:
                 data = self._dev.interruptRead(0x81,0x20,2000)
                 data = struct.unpack('<'+'B'*20, data)
                 for i in range(20):
+                    self._old_state[i] = self._state[i]
                     self._state[i] = data[i]
                 #print(self._state[:])
                 self.changed.value = 1
                 if self.callback is not None:
                     self.callback(*self.args)
+                if self.use_connection:
+                    self._sender.send([self.A_was_released(),self.Y_was_released(),self.get_analogL_x(),self.get_analogL_y()])
             except usb.core.USBError:
-                data = None
-            #connection.send(data)
-            #running = connection.recv()
+                pass
         return True
+
+    def X_was_released(self):
+        if (self._state[3] != 64) & (self._old_state[3] == 64):
+            return True
+        return False
+
+    def Y_was_released(self):
+        if (self._state[3] != 128) & (self._old_state[3] == 128):
+            return True
+        return False
+
+    def A_was_released(self):
+        if (self._state[3] != 16) & (self._old_state[3] == 16):
+            return True
+        return False
+
+    def B_was_released(self):
+        if (self._state[3] != 32) & (self._old_state[3] == 32):
+            return True
+        return False
+
 
     def get_state(self):
         return self._state[:]
