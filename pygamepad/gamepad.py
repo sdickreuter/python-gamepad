@@ -14,8 +14,9 @@ USB_PRODUCT = 0xc21d
 
 class Gamepad(object):
 
-    def __init__(self, callback = None):
-        self.callback = callback
+    def __init__(self):
+        self.callback = None
+        self.args = None
         busses = usb.busses()
         for bus in busses:
             devs = bus.devices
@@ -37,13 +38,17 @@ class Gamepad(object):
         # getting other gamepads to work might be a simple as changing this
         self._dev.interruptWrite(0x02,struct.pack('<BBB', 0x01,0x03,0x04))
 
-        self._state = multiprocessing.Array('i', [0,]*20 )
+        self._state = multiprocessing.Array('i', [0, 20, 0, 0, 0, 0, 128, 0, 128, 0, 128, 0, 128, 0, 0, 0, 0, 0, 0, 0] )
         self.changed = multiprocessing.Value('i', 0)
 
         self.master_conn, self.slave_conn = multiprocessing.Pipe()
         self._worker = multiprocessing.Process(target=self._read_gamepad, args=(self.slave_conn,))
         self._worker.daemon = True
         self._worker.start()
+
+    def add_callback(self, callback, *args):
+        self.callback = callback
+        self.args = args
 
     def _read_gamepad(self, connection):
         running = True
@@ -55,10 +60,10 @@ class Gamepad(object):
                 data = struct.unpack('<'+'B'*20, data)
                 for i in range(20):
                     self._state[i] = data[i]
-                print(self._state[:])
+                #print(self._state[:])
                 self.changed.value = 1
                 if self.callback is not None:
-                    self.callback()
+                    self.callback(*self.args)
             except usb.core.USBError:
                 data = None
             #connection.send(data)
@@ -86,16 +91,16 @@ class Gamepad(object):
     def get_Y(self):
         return self._state[3] == 128
 
-    def get_analogL_x(self):
+    def get_analogR_x(self):
         return self._state[11]
 
-    def get_analogL_y(self):
+    def get_analogR_y(self):
         return self._state[12]
 
-    def get_analogR_x(self):
+    def get_analogL_x(self):
         return self._state[6]
 
-    def get_analogR_y(self):
+    def get_analogL_y(self):
         return self._state[8]
 
     def get_dir_up(self):
@@ -110,6 +115,9 @@ class Gamepad(object):
     def get_dir_up(self):
         return self._state[2] in (8,9,10)
 
+    def changed(self):
+        return pad.changed.value
+
     def __del__(self):
         self._worker.join(0.2)
         self._dev.releaseInterface()
@@ -117,9 +125,11 @@ class Gamepad(object):
 
 # Unit test code
 if __name__ == '__main__':
-   pad = Gamepad()
-   while True:
-      if pad.changed.value == 1:
-        #print(pad._state[:])
-        #print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
-        pass
+    pad = None
+
+    pad = Gamepad()
+    while True:
+        if pad.changed.value == 1:
+            print(pad._state[:])
+            #print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
+            #pass
