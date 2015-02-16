@@ -72,7 +72,7 @@ class Gamepad(object):
                 if self.callback is not None:
                     self.callback(*self.args)
                 if self.use_connection:
-                    self._sender.send([self.A_was_released(),self.Y_was_released(),self.get_analogL_x(),self.get_analogL_y()])
+                    self._sender.send([self.A_was_released(),self.B_was_released(),self.Y_was_released(),self.get_analogL_x(),self.get_analogL_y()])
             except usb.core.USBError:
                 pass
         return True
