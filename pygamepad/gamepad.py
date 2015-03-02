@@ -32,6 +32,7 @@ class Gamepad(object):
         #conf = d.configurations[0]
         #intf = conf.interfaces[0][0]
         self._dev = d.open()
+        #print(self._dev.dev)
         try:
             self._dev.detachKernelDriver(0)
         except usb.core.USBError:
@@ -72,7 +73,7 @@ class Gamepad(object):
                 if self.callback is not None:
                     self.callback(*self.args)
                 if self.use_connection:
-                    self._sender.send([self.A_was_released(),self.B_was_released(),self.Y_was_released(),self.get_analogL_x(),self.get_analogL_y()])
+                    self._sender.send([self.A_was_released(),self.B_was_released(),self.X_was_released(),self.Y_was_released(),self.get_analogL_x(),self.get_analogL_y()])
             except usb.core.USBError:
                 pass
         return True
