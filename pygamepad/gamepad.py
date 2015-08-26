@@ -48,7 +48,6 @@ class Gamepad(object):
        try:
             data = self._dev.interruptRead(0x81,0x20,2000)
             data = struct.unpack('<'+'B'*20, data)
-            print(data)
             return data
        except usb.core.USBError as e:
             #print(e)
