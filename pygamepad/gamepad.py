@@ -81,7 +81,6 @@ class Gamepad(object):
             return True
         return False
 
-
     def get_state(self):
         return self._state[:]
 
@@ -128,7 +127,7 @@ class Gamepad(object):
         return self._state[2] in (8,9,10)
 
     def changed(self):
-        return pad.changed
+        return self.changed
 
     def __del__(self):
         if not self._dev is None:
@@ -142,7 +141,7 @@ if __name__ == '__main__':
     pad = Gamepad()
     while True:
         pad._read_gamepad()
-        if pad.changed == 1:
-            print(pad._state)
-            #print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
+        if pad.changed:
+            #print(pad._state)
+            print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
             #pass
