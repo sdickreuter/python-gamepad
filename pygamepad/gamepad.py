@@ -9,7 +9,7 @@ import struct
 
 USB_VENDOR = 0x046d
 USB_PRODUCT = 0xc21d
-
+default_state = (0, 20, 0, 0, 0, 0, 123, 251, 128, 0, 128, 0, 128, 0, 0, 0, 0, 0, 0, 0)
 
 class Gamepad(object):
 
@@ -39,10 +39,10 @@ class Gamepad(object):
         # value was determined by sniffing the usb traffic with wireshark
         # getting other gamepads to work might be a simple as changing this
         self._dev.interruptWrite(0x02,struct.pack('<BBB', 0x01,0x03,0x04))
-        print("Gamepad initialized")
         self.changed = False
-        self._state = self._getState()
-        self._old_state = self._state
+        self._state = default_state
+        self._old_state = default_state
+        print("Gamepad initialized")
 
     def _getState(self):
        try:
@@ -142,6 +142,6 @@ if __name__ == '__main__':
     while True:
         pad._read_gamepad()
         if pad.changed:
-            #print(pad._state)
-            print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
+            print(pad._state)
+            #print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
             #pass
