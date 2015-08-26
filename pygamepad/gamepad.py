@@ -28,7 +28,10 @@ class Gamepad(object):
             self._dev.detachKernelDriver(0)
         except usb.core.USBError:
             print("error detaching kernel driver (usually no problem)")
+        except AttributeError:
+            pass
         #handle.interruptWrite(0, 'W')
+        self._dev.setConfiguration(1)
         self._dev.claimInterface(0)
 
         #This value has to be send to the gamepad, or it won't start working
@@ -39,7 +42,7 @@ class Gamepad(object):
     def _read_gamepad(self):
         running = True
         while running:
-            self.changed.value = 0
+            self.changed = 0
             try:
                 data = self._dev.interruptRead(0x81,0x20,2000)
                 data = struct.unpack('<'+'B'*20, data)
@@ -47,7 +50,7 @@ class Gamepad(object):
                     self._old_state[i] = self._state[i]
                     self._state[i] = data[i]
                 #print(self._state[:])
-                self.changed.value = 1
+                self.changed = 1
             except usb.core.USBError:
                 pass
         return True
@@ -119,7 +122,7 @@ class Gamepad(object):
         return self._state[2] in (8,9,10)
 
     def changed(self):
-        return pad.changed.value
+        return pad.changed
 
     def __del__(self):
         self._dev.releaseInterface()
@@ -131,7 +134,7 @@ if __name__ == '__main__':
 
     pad = Gamepad()
     while True:
-        if pad.changed.value == 1:
+        if pad.changed == 1:
             print(pad._state[:])
             #print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
             #pass
