@@ -14,6 +14,7 @@ USB_PRODUCT = 0xc21d
 class Gamepad(object):
 
     def __init__(self):
+        self._dev=None
         busses = usb.busses()
         for bus in busses:
             devs = bus.devices
@@ -41,6 +42,7 @@ class Gamepad(object):
         print("Gamepad initialized")
         self.changed = False
         self._state = self._getState()
+        self._old_state = self._state
 
     def _getState(self):
        try:
