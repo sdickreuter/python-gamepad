@@ -6,7 +6,6 @@
 
 import usb
 import struct
-import multiprocessing
 
 USB_VENDOR = 0x046d
 USB_PRODUCT = 0xc21d
@@ -14,15 +13,7 @@ USB_PRODUCT = 0xc21d
 
 class Gamepad(object):
 
-    def __init__(self, use_connection = False):
-        self.use_connection = use_connection
-        if use_connection:
-            self.receiver, self._sender = multiprocessing.Pipe()
-        else:
-            self._sender = None
-            self.receiver = None
-        self.callback = None
-        self.args = None
+    def __init__(self):
         busses = usb.busses()
         for bus in busses:
             devs = bus.devices
@@ -45,19 +36,6 @@ class Gamepad(object):
         # getting other gamepads to work might be a simple as changing this
         self._dev.interruptWrite(0x02,struct.pack('<BBB', 0x01,0x03,0x04))
 
-        #initialize _state with correct values
-        self._state = multiprocessing.Array('i', [0, 20, 0, 0, 0, 0, 128, 0, 128, 0, 128, 0, 128, 0, 0, 0, 0, 0, 0, 0] )
-        self._old_state = multiprocessing.Array('i', [0, 20, 0, 0, 0, 0, 128, 0, 128, 0, 128, 0, 128, 0, 0, 0, 0, 0, 0, 0] )
-        self.changed = multiprocessing.Value('i', 0)
-
-        self._worker = multiprocessing.Process(target=self._read_gamepad)
-        self._worker.daemon = True
-        self._worker.start()
-
-    def add_callback(self, callback, *args):
-        self.callback = callback
-        self.args = args
-
     def _read_gamepad(self):
         running = True
         while running:
@@ -70,10 +48,6 @@ class Gamepad(object):
                     self._state[i] = data[i]
                 #print(self._state[:])
                 self.changed.value = 1
-                if self.callback is not None:
-                    self.callback(*self.args)
-                if self.use_connection:
-                    self._sender.send([self.A_was_released(),self.B_was_released(),self.X_was_released(),self.Y_was_released(),self.get_analogL_x(),self.get_analogL_y()])
             except usb.core.USBError:
                 pass
         return True
@@ -148,7 +122,6 @@ class Gamepad(object):
         return pad.changed.value
 
     def __del__(self):
-        self._worker.join(0.2)
         self._dev.releaseInterface()
         self._dev.reset()
 
