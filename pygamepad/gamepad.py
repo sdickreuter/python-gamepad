@@ -40,19 +40,17 @@ class Gamepad(object):
         self._dev.interruptWrite(0x02,struct.pack('<BBB', 0x01,0x03,0x04))
 
     def _read_gamepad(self):
-        running = True
-        while running:
-            self.changed = 0
-            try:
-                data = self._dev.interruptRead(0x81,0x20,2000)
-                data = struct.unpack('<'+'B'*20, data)
-                for i in range(20):
-                    self._old_state[i] = self._state[i]
-                    self._state[i] = data[i]
-                #print(self._state[:])
-                self.changed = 1
-            except usb.core.USBError:
-                pass
+        self.changed = 0
+        try:
+            data = self._dev.interruptRead(0x81,0x20,2000)
+            data = struct.unpack('<'+'B'*20, data)
+            for i in range(20):
+                self._old_state[i] = self._state[i]
+                self._state[i] = data[i]
+            #print(self._state[:])
+            self.changed = 1
+        except usb.core.USBError:
+            pass
         return True
 
     def X_was_released(self):
@@ -125,8 +123,9 @@ class Gamepad(object):
         return pad.changed
 
     def __del__(self):
-        self._dev.releaseInterface()
-        self._dev.reset()
+        if not self._dev is None:
+            self._dev.releaseInterface()
+            self._dev.reset()
 
 # Unit test code
 if __name__ == '__main__':
