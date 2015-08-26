@@ -38,20 +38,27 @@ class Gamepad(object):
         # value was determined by sniffing the usb traffic with wireshark
         # getting other gamepads to work might be a simple as changing this
         self._dev.interruptWrite(0x02,struct.pack('<BBB', 0x01,0x03,0x04))
+        print("Gamepad initialized")
+        self.changed = False
+        self._state = self._getState()
 
-    def _read_gamepad(self):
-        self.changed = 0
-        try:
+    def _getState(self):
+       try:
             data = self._dev.interruptRead(0x81,0x20,2000)
             data = struct.unpack('<'+'B'*20, data)
-            for i in range(20):
-                self._old_state[i] = self._state[i]
-                self._state[i] = data[i]
-            #print(self._state[:])
-            self.changed = 1
-        except usb.core.USBError:
-            pass
-        return True
+            print(data)
+            return data
+       except usb.core.USBError as e:
+            #print(e)
+            return None
+
+    def _read_gamepad(self):
+        self.changed = False
+        state = self._getState()
+        if not state is None:
+            self._old_state = self._state
+            self._state = state
+            self.changed = True
 
     def X_was_released(self):
         if (self._state[3] != 64) & (self._old_state[3] == 64):
@@ -133,7 +140,8 @@ if __name__ == '__main__':
 
     pad = Gamepad()
     while True:
+        pad._read_gamepad()
         if pad.changed == 1:
-            print(pad._state[:])
+            print(pad._state)
             #print("analog R: {0:3}|{1:3}  analog L: {2:3}|{3:3}".format(pad.get_analogR_x(),pad.get_analogR_y(),pad.get_analogL_x(),pad.get_analogL_y()))
             #pass
