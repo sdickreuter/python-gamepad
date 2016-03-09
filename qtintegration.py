@@ -4,6 +4,7 @@
 
 from PyQt5.QtCore import pyqtSlot, QThread, QMutex, QWaitCondition, pyqtSignal, QObject, QTimer
 import pygamepad
+import sys
 
 class GamepadThread(QObject):
     ASignal = pyqtSignal()
