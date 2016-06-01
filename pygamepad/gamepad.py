@@ -14,7 +14,8 @@ default_state = (0, 20, 0, 0, 0, 0, 123, 251, 128, 0, 128, 0, 128, 0, 0, 0, 0, 0
 class Gamepad(object):
 
     def __init__(self):
-        self._dev=None
+        self.is_initialized = False
+        d=None
         busses = usb.busses()
         for bus in busses:
             devs = bus.devices
@@ -23,26 +24,30 @@ class Gamepad(object):
                     d = dev
         #conf = d.configurations[0]
         #intf = conf.interfaces[0][0]
-        self._dev = d.open()
-        #print(self._dev.dev)
-        try:
-            self._dev.detachKernelDriver(0)
-        except usb.core.USBError:
-            print("error detaching kernel driver (usually no problem)")
-        except AttributeError:
-            pass
-        #handle.interruptWrite(0, 'W')
-        self._dev.setConfiguration(1)
-        self._dev.claimInterface(0)
+        if not d is None:
+            self._dev = d.open()
+            print(self._dev)
+            try:
+                self._dev.detachKernelDriver(0)
+            except usb.core.USBError:
+                print("error detaching kernel driver (usually no problem)")
+            except AttributeError:
+                pass
+            #handle.interruptWrite(0, 'W')
+            self._dev.setConfiguration(1)
+            self._dev.claimInterface(0)
 
-        #This value has to be send to the gamepad, or it won't start working
-        # value was determined by sniffing the usb traffic with wireshark
-        # getting other gamepads to work might be a simple as changing this
-        self._dev.interruptWrite(0x02,struct.pack('<BBB', 0x01,0x03,0x04))
-        self.changed = False
-        self._state = default_state
-        self._old_state = default_state
-        print("Gamepad initialized")
+            #This value has to be send to the gamepad, or it won't start working
+            # value was determined by sniffing the usb traffic with wireshark
+            # getting other gamepads to work might be a simple as changing this
+            self._dev.interruptWrite(0x02,struct.pack('<BBB', 0x01,0x03,0x04))
+            self.changed = False
+            self._state = default_state
+            self._old_state = default_state
+            self.is_initialized = True
+            print("Gamepad initialized")
+        else:
+            RuntimeError("Could not initialize Gamepad")
 
     def _getState(self):
        try:
@@ -130,7 +135,8 @@ class Gamepad(object):
         return self.changed
 
     def __del__(self):
-        if not self._dev is None:
+        #if not self._dev is None:
+        if self.is_initialized:
             self._dev.releaseInterface()
             self._dev.reset()
 
