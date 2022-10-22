@@ -1,3 +1,6 @@
+This repo is archived, please check https://github.com/rickwierenga/python-gamepad for updates.
+
+
 python-gamepad
 ==============
 
